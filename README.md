@@ -1,3 +1,10 @@
+# About This Fork
+
+I am not the original author of this code. In this fork, I am reworking the code a bit to allow me to pass in images from an external source (edited webcam frames) and then obtain the 3D coordinates back.
+
+This is to test whether the general idea of this hand tracking method could be integrated into a larger AR framework.
+
+The original README from the original authors is below:
 
 # Hand Mesh Reconstruction
 
