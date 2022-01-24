@@ -4,6 +4,21 @@ I am not the original author of this code. In this fork, I am reworking the code
 
 This is to test whether the general idea of this hand tracking method could be integrated into a larger AR framework.
 
+## Differences:
+
+Before installing requirements.txt, I need to install `torch_scatter` via the command `pip install torch-scatter==2.0.7 -f https://data.pyg.org/whl/torch-1.7.1+cu101.html`, otherwise there will be an error when it's installed via requirements.txt. More details about the problem (and the place where I found the solution) can be seen at [https://github.com/rusty1s/pytorch_scatter/issues/245](https://github.com/rusty1s/pytorch_scatter/issues/245)
+
+Also, in requirements.txt, I removed the thing that said the version of chumpy had to be `==0.69`, otherwise the installation of chumpy errors out.
+
+Finally, had to also install the following modules via pip:
+
+ * transforms3d
+ * pycocotools
+ * smplpytorch
+ * tensorboardX
+
+## With that out of the way...
+
 The original README from the original authors is below:
 
 # Hand Mesh Reconstruction

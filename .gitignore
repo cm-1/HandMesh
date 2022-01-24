@@ -6,3 +6,6 @@ __pycache__/
 **/eval/
 .vscode/
 .idea/
+
+# My additions:
+env/
