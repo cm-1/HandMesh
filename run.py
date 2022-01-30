@@ -14,15 +14,33 @@ import pickle
 import time
 from utils.transforms import rigid_align
 
+class ReturnedPredictionPoints:
+    def __init__(self, points2D = None, points3D = None):
+        self.points2D = points2D
+        self.points3D = points3D
 
 class Runner(object):
-    def __init__(self, args, model, faces, device):
+    def __init__(self, args, model, faces, device, focalLength = -1):
         super(Runner, self).__init__()
         self.args = args
         self.model = model
         self.faces = faces
         self.device = device
         self.face = torch.from_numpy(self.faces[0].astype(np.int64)).to(self.device)
+        self.kMatrix = None
+        self.refWidth = -1
+        if focalLength > 0:
+            self.setKMatrix(focalLength)
+    
+    def setKMatrix(self, focalLength, refWidthForFocalLength):
+        args = self.args
+        K = np.identity(3)
+        K[0, 0] = focalLength * (args.size / refWidthForFocalLength)
+        K[1, 1] = focalLength * (args.size / refWidthForFocalLength)
+        K[0, 2] = args.size // 2
+        K[1, 2] = args.size // 2
+        self.kMatrix = K
+        self.refWidth = refWidthForFocalLength
 
     def set_train_loader(self, train_loader, epochs, optimizer, scheduler, writer, board, start_epoch=0):
         self.train_loader = train_loader
@@ -302,3 +320,56 @@ class Runner(object):
                 bar.suffix = '({batch}/{size})' .format(batch=step+1, size=len(image_files))
                 bar.next()
         bar.finish()
+
+    def processFrame(self, originalImage, step):
+        args = self.args
+        retVal = ReturnedPredictionPoints()
+        with torch.no_grad():            
+            originalHeight, originalWidth = originalImage.shape[:2]
+            if self.refWidth != originalHeight and self.refWidth != originalWidth:
+                raise Exception("Double-check camera matrix setup! The \"reference width\" you passed in does not match the dimensions of the images passed in here.")
+
+            squareSize = max(originalHeight, originalWidth)
+            verticalBorder = (squareSize - originalHeight)//2
+            horizontalBorder = (squareSize - originalWidth)//2
+            squaredImage = cv2.copyMakeBorder(originalImage, verticalBorder, verticalBorder, horizontalBorder, horizontalBorder, cv2.BORDER_CONSTANT)
+            image = cv2.resize(squaredImage, (args.size, args.size))
+            input = torch.from_numpy(base_transform(image, size=args.size)).unsqueeze(0).to(self.device)
+
+            out = self.model(input)
+            # silhouette
+            mask_pred = out.get('mask_pred')
+            if mask_pred is not None:
+                mask_pred = (mask_pred[0] > 0.3).cpu().numpy().astype(np.uint8)
+                mask_pred = cv2.resize(mask_pred, (input.size(3), input.size(2)))
+                try:
+                    contours, _ = cv2.findContours(mask_pred, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    contours.sort(key=cnt_area, reverse=True)
+                    poly = contours[0].transpose(1, 0, 2).astype(np.int32)
+                except:
+                    poly = None
+            else:
+                mask_pred = np.zeros([input.size(3), input.size(2)])
+                poly = None
+            # vertex
+            pred = out['mesh_pred'][0] if isinstance(out['mesh_pred'], list) else out['mesh_pred']
+            vertex = (pred[0].cpu() * self.std.cpu()).numpy()
+            uv_pred = out['uv_pred']
+            if uv_pred.ndim == 4:
+                uv_point_pred, uv_pred_conf = map2uv(uv_pred.cpu().numpy(), (input.size(2), input.size(3)))
+            else:
+                uv_point_pred, uv_pred_conf = (uv_pred * args.size).cpu().numpy(), [None,]
+            vertex, align_state = registration(vertex, uv_point_pred[0], self.j_regressor, self.kMatrix, args.size, uv_conf=uv_pred_conf[0], poly=poly)
+
+            vertex2xyz = mano_to_mpii(np.matmul(self.j_regressor, vertex))
+
+            for i in range(uv_point_pred.shape[0]):
+                for j in range(uv_point_pred.shape[1]):
+                    pt = (uv_point_pred[i][j]).astype(int)
+                    image = cv2.circle(image, pt, 2, (0, 0, 0), 2)
+            cv2.imshow("small", image)
+
+            retVal.points2D = ((squareSize / args.size) * uv_point_pred) - (horizontalBorder, verticalBorder)
+            retVal.points3D = vertex2xyz
+
+        return retVal

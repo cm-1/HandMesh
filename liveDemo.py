@@ -13,6 +13,8 @@ from datasets.Human36M.human36m import Human36M
 from torch.utils.data import DataLoader
 from run import Runner
 
+import cv2
+
 
 class DefaultArgsWrapper(dict):
     # Methods to allow me to call dict.key instead of dict["key"]
@@ -24,6 +26,8 @@ class DefaultArgsWrapper(dict):
 
 
 def getRunner(
+    focalLength,
+    refWidthForFocalLength,
     exp_name="mobrecon",
     backbone="DenseStack",
     dataset="FreiHAND",
@@ -106,14 +110,56 @@ def getRunner(
     runner = Runner(args, model, tmp['face'], device)
 
     runner.set_demo(args)
-
+    runner.model.eval()
+    runner.setKMatrix(focalLength, refWidthForFocalLength)
     return runner
 
+class webcamManager:
+    def __init__(self, runner, width, height):
+        self.runner = runner
+        cap = cv2.VideoCapture(0) #,cv2.CAP_DSHOW)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        self.cap = cap
+        self.step = 0
+
+    def displayFrame(self):
+        ret, frame = self.cap.read()
+
+        convertedFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        if not ret:
+            return
+
+        handInfo = self.runner.processFrame(convertedFrame, self.step)
+        colourList = [(0, 0, 255), (0, 255, 0)]
+        for i in range(handInfo.points2D.shape[0]):
+            
+            for j in range(handInfo.points2D.shape[1]):
+                pt = (handInfo.points2D[i][j]).astype(int)
+
+                circleRadius = 5
+                colour = colourList[i]
+                thickness = 1
+                
+                frame = cv2.circle(frame, pt, circleRadius, colour, thickness)
+
+        cv2.imshow("test", frame)
+        self.step += 1
 
 
+
+    
 
 print("Starting")
-x = getRunner()
-x.demo()
+w = 640
+h = 480
+r = getRunner(555, w)
+wcm = webcamManager(r, w, h)
+while True:
+    wcm.displayFrame()
+    # Break on press of "Q" key.
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 print("Done")
 
