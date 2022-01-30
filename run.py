@@ -321,7 +321,7 @@ class Runner(object):
                 bar.next()
         bar.finish()
 
-    def processFrame(self, originalImage, step):
+    def processFrame(self, originalImage):
         args = self.args
         retVal = ReturnedPredictionPoints()
         with torch.no_grad():            

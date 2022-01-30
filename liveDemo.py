@@ -121,7 +121,6 @@ class webcamManager:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self.cap = cap
-        self.step = 0
 
     def displayFrame(self):
         ret, frame = self.cap.read()
@@ -131,7 +130,7 @@ class webcamManager:
         if not ret:
             return
 
-        handInfo = self.runner.processFrame(convertedFrame, self.step)
+        handInfo = self.runner.processFrame(convertedFrame)
         colourList = [(0, 0, 255), (0, 255, 0)]
         for i in range(handInfo.points2D.shape[0]):
             
@@ -145,7 +144,6 @@ class webcamManager:
                 frame = cv2.circle(frame, pt, circleRadius, colour, thickness)
 
         cv2.imshow("test", frame)
-        self.step += 1
 
 
 
