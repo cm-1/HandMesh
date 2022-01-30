@@ -4,7 +4,7 @@ I am not the original author of this code. In this fork, I am reworking the code
 
 This is to test whether the general idea of this hand tracking method could be integrated into a larger AR framework.
 
-If you run the file `liveDemo.py`, you can use your camera's webcam to obtain real-time tracking of your hands. Before running it, however, you'll want to make sure to edit the file to include your desired webcan input width/height (I'm using 640x480 right now) as well as its focal length in pixels relative to the larger of those two dimensions. If you do not know your camera's focal length, I recommend following along [this OpenCV tutorial](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html) in order to obtain it.
+If you run the file `liveDemo.py`, you can use your camera's webcam to obtain real-time tracking of your hands. The predicted 2D points are in red, while the 3D points are cyan. Before running it, however, you'll want to make sure to edit the file to include your desired webcan input width/height (I'm using 640x480 right now) as well as its focal length in pixels relative to the larger of those two dimensions. If you do not know your camera's focal length, I recommend following along [this OpenCV tutorial](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html) in order to obtain it.
 
 
 ## Installation Notes:
