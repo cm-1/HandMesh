@@ -60,3 +60,10 @@ class BaseOptions():
         args = parser.parse_args()
 
         return args
+
+    def getArgsAndParser(self):
+        parser = argparse.ArgumentParser(description='mesh generator')
+        self.initialize(parser)
+        args = parser.parse_args()
+
+        return parser, args
