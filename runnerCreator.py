@@ -1,3 +1,9 @@
+import os
+import sys
+import inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+sys.path.insert(0, currentdir) 
+
 import os.path as osp
 import torch
 import torch.backends.cudnn as cudnn
@@ -112,3 +118,15 @@ def getRunner(
     runner.model.eval()
     runner.setKMatrix(focalLength, refWidthForFocalLength)
     return runner
+
+import numpy as np
+import cv2
+def testNumpyInput(x):
+    # x = np.reshape(y, (480, 640, 3))
+    cv2.imshow("does this work?", x)
+    cv2.waitKey(5000)
+    print("Shape:", x.shape)
+    print("Size:", x.size)
+    print("max:", x.max())
+    print("min:", x.min())
+    print("dtype:", x.dtype)
