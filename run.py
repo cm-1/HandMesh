@@ -367,7 +367,7 @@ class Runner(object):
                 for j in range(uv_point_pred.shape[1]):
                     pt = (uv_point_pred[i][j]).astype(int)
                     image = cv2.circle(image, pt, 2, (0, 0, 0), 2)
-            cv2.imshow("small", image)
+            #cv2.imshow("small", image)
 
             retVal.points2D = ((squareSize / args.size) * uv_point_pred) - (horizontalBorder, verticalBorder)
             retVal.points3D = vertex2xyz
